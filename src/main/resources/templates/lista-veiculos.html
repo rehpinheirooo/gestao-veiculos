@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Lista de Veículos Cadastrados</title>
+    <link rel="stylesheet" href="style.css"> 
+    </head>
+<body>
+    <div class="container">
+        <h1>Veículos em Estoque</h1>
+        <a href="/veiculos/cadastrar">← Voltar para Cadastro</a>
+        <br><br>
+
+        <div class="filter-controls">
+
+            <div class="filter-group">
+                <label for="filtroInput">Nome/Modelo:</label>
+                <input type="text" id="filtroInput" placeholder="Buscar..." >
+            </div>
+
+            <div class="filter-group">
+                <label for="filtroMarca">Marca:</label>
+                <select id="filtroMarca">
+                    <option value="">Todas as Marcas</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="filtroStatus">Status:</label>
+                <select id="filtroStatus">
+                    <option value="">Todos os Status</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="filtroAno">Ano Mínimo:</label>
+                <input type="number" id="filtroAno" placeholder="Ex: 2020">
+            </div>
+            
+            <div class="filter-group">
+                <label for="filtroPreco">Preço Máximo:</label>
+                <input type="number" id="filtroPreco" step="0.01" placeholder="Ex: 50000.00">
+            </div>
+
+        </div>
+        <table id="veiculoTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Modelo</th>
+                    <th>Marca</th>
+                    <th>Ano</th>
+                    <th>Preço</th>
+                    <th>Status</th>
+                    <th>Ações</th> 
+                </tr>
+            </thead>
+            <tbody id="veiculoTableBody">
+                </tbody>
+        </table>
+
+        <p id="mensagemLista"></p>
+    </div> <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const API_BASE_URL = 'http://localhost:8081/api';
+            const tableBody = document.getElementById('veiculoTableBody');
+            const mensagemDiv = document.getElementById('mensagemLista');
+            
+            // Variáveis para o filtro
+            let todosOsVeiculos = []; 
+            const filtroInput = document.getElementById('filtroInput');
+            const filtroMarca = document.getElementById('filtroMarca');
+            const filtroStatus = document.getElementById('filtroStatus');
+            const filtroAno = document.getElementById('filtroAno');
+            const filtroPreco = document.getElementById('filtroPreco');
+
+
+            // --- 0. FUNÇÃO PARA CARREGAR AS OPÇÕES DE FILTRO (Marca e Status) ---
+            async function carregarOpcoesFiltro() {
+                try {
+                    // Carrega as Marcas
+                    const responseMarcas = await fetch(`${API_BASE_URL}/marcas`);
+                    const marcas = await responseMarcas.json();
+
+                    marcas.forEach(marca => {
+                        const option = document.createElement('option');
+                        option.value = marca.nome; 
+                        option.textContent = marca.nome;
+                        filtroMarca.appendChild(option);
+                    });
+
+                    // Popula Status
+                    const statusUnicos = [...new Set(todosOsVeiculos.map(v => v.status).filter(s => s))];
+                    statusUnicos.forEach(status => {
+                        const option = document.createElement('option');
+                        option.value = status;
+                        option.textContent = status;
+                        filtroStatus.appendChild(option);
+                    });
+
+                } catch (error) {
+                    console.error('Erro ao carregar opções de filtro:', error);
+                }
+            }
+
+
+            // --- 1. FUNÇÃO PARA CARREGAR OS VEÍCULOS (BUSCA NA API) ---
+            async function carregarVeiculos() {
+                mensagemDiv.textContent = 'Carregando veículos...';
+                try {
+                    const response = await fetch(`${API_BASE_URL}/veiculos?t=${new Date().getTime()}`);
+                    const veiculos = await response.json();
+
+                    todosOsVeiculos = veiculos; 
+
+                    if (veiculos.length === 0) {
+                        mensagemDiv.textContent = 'Nenhum veículo cadastrado.';
+                        tableBody.innerHTML = '';
+                        return;
+                    }
+
+                    mensagemDiv.textContent = ''; 
+                    
+                    renderizarTabela(todosOsVeiculos);
+
+                    await carregarOpcoesFiltro(); 
+
+                } catch (error) {
+                    mensagemDiv.textContent = 'Erro ao carregar a lista de veículos.';
+                    console.error('Erro na API de listagem:', error);
+                }
+            }
+
+            // --- 2. FUNÇÃO PARA RENDERIZAR (DESENHAR) A TABELA ---
+            function renderizarTabela(listaVeiculos) {
+                tableBody.innerHTML = ''; 
+
+                listaVeiculos.forEach(veiculo => {
+                    const row = tableBody.insertRow();
+                    
+                    // Células de dados
+                    row.insertCell().textContent = veiculo.id;
+                    row.insertCell().textContent = veiculo.nome;
+                    row.insertCell().textContent = veiculo.modelo;
+                    row.insertCell().textContent = veiculo.marca ? veiculo.marca.nome : 'N/A';
+                    row.insertCell().textContent = veiculo.ano;
+                    row.insertCell().textContent = new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL'
+                    }).format(veiculo.preco);
+                    row.insertCell().textContent = veiculo.status;
+
+                    // Célula de Ações
+                    const acoesCell = row.insertCell();
+                    
+                    // Botão de Editar
+                    const editButton = document.createElement('a');
+                    editButton.textContent = 'Editar';
+                    editButton.href = `/veiculos/editar/${veiculo.id}`;
+                    editButton.classList.add('edit-btn', 'primary-btn'); // Adicionado primary-btn para estilo
+                    editButton.style.marginRight = '10px'; 
+                    acoesCell.appendChild(editButton);
+
+                    // Botão de Excluir
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Excluir';
+                    deleteButton.classList.add('delete-btn'); 
+                    deleteButton.dataset.veiculoId = veiculo.id; 
+                    
+                    acoesCell.appendChild(deleteButton);
+                });
+            }
+
+            // --- 3. FUNÇÃO PARA FILTRAR E RENDERIZAR A TABELA (LÓGICA MULTI-FILTRO) ---
+            function aplicarFiltro() {
+                
+                // 1. Obtém os valores dos filtros
+                const termo = filtroInput.value.toLowerCase().trim();
+                const marcaSelecionada = filtroMarca.value.toLowerCase();
+                const statusSelecionado = filtroStatus.value.toLowerCase();
+                const anoMinimo = parseInt(filtroAno.value);
+                const precoMaximo = parseFloat(filtroPreco.value);
+
+                const veiculosFiltrados = todosOsVeiculos.filter(veiculo => {
+                    let passarNoFiltro = true;
+
+                    // Filtro 1: Nome ou Modelo
+                    if (termo) {
+                        const nome = (veiculo.nome || "").toLowerCase();
+                        const modelo = (veiculo.modelo || "").toLowerCase();
+                        if (!(nome.includes(termo) || modelo.includes(termo))) {
+                            passarNoFiltro = false;
+                        }
+                    }
+                    
+                    // Filtro 2: Marca
+                    if (passarNoFiltro && marcaSelecionada) {
+                        const marcaNome = (veiculo.marca && veiculo.marca.nome) ? veiculo.marca.nome.toLowerCase() : '';
+                        if (marcaNome !== marcaSelecionada) {
+                            passarNoFiltro = false;
+                        }
+                    }
+
+                    // Filtro 3: Status
+                    if (passarNoFiltro && statusSelecionado) {
+                        const veiculoStatus = (veiculo.status || "").toLowerCase();
+                        if (veiculoStatus !== statusSelecionado) {
+                            passarNoFiltro = false;
+                        }
+                    }
+
+                    // Filtro 4: Ano Mínimo
+                    if (passarNoFiltro && !isNaN(anoMinimo)) {
+                        if (veiculo.ano < anoMinimo) {
+                            passarNoFiltro = false;
+                        }
+                    }
+                    
+                    // Filtro 5: Preço Máximo
+                    if (passarNoFiltro && !isNaN(precoMaximo)) {
+                        if (veiculo.preco > precoMaximo) {
+                            passarNoFiltro = false;
+                        }
+                    }
+
+                    return passarNoFiltro;
+                });
+
+                renderizarTabela(veiculosFiltrados);
+
+                if (veiculosFiltrados.length === 0) {
+                     mensagemDiv.textContent = 'Nenhum veículo encontrado com os critérios de busca.';
+                } else {
+                     mensagemDiv.textContent = '';
+                }
+            }
+            
+            // --- 4. LISTENERS PARA OS CAMPOS DE FILTRO ---
+            filtroInput.addEventListener('input', aplicarFiltro);
+            filtroAno.addEventListener('input', aplicarFiltro);
+            filtroPreco.addEventListener('input', aplicarFiltro);
+            filtroMarca.addEventListener('change', aplicarFiltro);
+            filtroStatus.addEventListener('change', aplicarFiltro);
+
+
+            // Listener para exclusão
+            tableBody.addEventListener('click', async (e) => {
+                if (e.target.classList.contains('delete-btn')) {
+                    const veiculoId = e.target.dataset.veiculoId;
+                    
+                    if (confirm(`Tem certeza que deseja excluir o veículo de ID ${veiculoId}?`)) {
+                        try {
+                            const response = await fetch(`${API_BASE_URL}/veiculos/${veiculoId}`, {
+                                method: 'DELETE'
+                            });
+
+                            if (response.ok || response.status === 204) {
+                                alert(`Veículo de ID ${veiculoId} excluído com sucesso!`);
+                                carregarVeiculos(); 
+                            } else {
+                                alert('Erro ao excluir veículo. Verifique o console.');
+                                console.error('Falha no DELETE:', await response.text());
+                            }
+                        } catch (error) {
+                            alert('Erro de conexão com o servidor.');
+                            console.error('Erro de rede ao tentar excluir:', error);
+                        }
+                    }
+                }
+            });
+
+            carregarVeiculos();
+        });
+    </script>
+</body>
+</html>

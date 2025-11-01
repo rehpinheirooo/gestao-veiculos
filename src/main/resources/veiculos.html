@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Lista de Veículos Cadastrados</title>
+</head>
+<body>
+    <h1>Veículos Cadastrados</h1>
+    
+    <table border="1" id="veiculosTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Cor</th>
+                <th>Ano</th>
+                <th>Marca</th>
+            </tr>
+        </thead>
+        <tbody id="veiculosTableBody">
+            </tbody>
+    </table>
+
+    <p id="mensagem"></p>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const veiculosTableBody = document.getElementById('veiculosTableBody');
+            const mensagemDiv = document.getElementById('mensagem');
+            const API_BASE_URL = 'http://localhost:8081/api';
+
+            // Função para carregar e exibir a lista de veículos
+            async function carregarVeiculos() {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/veiculos`);
+                    const veiculos = await response.json();
+                    
+                    veiculosTableBody.innerHTML = ''; // Limpa o corpo da tabela
+
+                    if (veiculos.length === 0) {
+                        mensagemDiv.textContent = 'Nenhum veículo cadastrado ainda.';
+                        return;
+                    }
+
+                    // Preenche a tabela com os dados
+                    veiculos.forEach(veiculo => {
+                        const row = veiculosTableBody.insertRow();
+                        
+                        // ID
+                        row.insertCell().textContent = veiculo.id;
+                        // Nome
+                        row.insertCell().textContent = veiculo.nome;
+                        // Cor
+                        row.insertCell().textContent = veiculo.cor;
+                        // Ano
+                        row.insertCell().textContent = veiculo.ano;
+                        // Marca (Acessa o nome da marca)
+                        // A propriedade 'nome' agora funciona graças à correção no backend!
+                        row.insertCell().textContent = veiculo.marca ? veiculo.marca.nome : 'N/A';
+                    });
+
+                } catch (error) {
+                    mensagemDiv.textContent = 'Erro ao carregar os veículos do servidor.';
+                    console.error('Erro de rede ou na API:', error);
+                }
+            }
+
+            // Inicia o carregamento quando a página carrega
+            carregarVeiculos();
+        });
+    </script>
+</body>
+</html>

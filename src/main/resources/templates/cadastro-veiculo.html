@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Cadastro / Edição de Veículos</title>    
+    <link rel="stylesheet" th:href="@{/style.css}"/>
+</head>
+<body>
+    <div class="container">
+        <h1>Cadastro de Veículo</h1>
+        <a href="/veiculos">← Voltar para Lista</a>
+        <br><br>
+
+        <form id="veiculoForm">
+
+            <label for="nome">Nome do Veículo:</label>
+            <input type="text" id="nome" name="nome" required>
+
+            <label for="cor">Cor:</label>
+            <input type="text" id="cor" name="cor" required>
+
+            <label for="ano">Ano:</label>
+            <input type="number" id="ano" name="ano" required>
+
+            <label for="modelo">Modelo:</label>
+            <input type="text" id="modelo" name="modelo" required>
+
+            <label for="preco">Preço:</label>
+            <input type="number" id="preco" name="preco" step="0.01" required>
+
+            <label for="quilometragem">Quilometragem:</label>
+            <input type="number" id="quilometragem" name="quilometragem" required>
+
+            <label for="status">Status (Ex: Em Estoque):</label>
+            <input type="text" id="status" name="status" required>
+
+            <label for="marca">Marca:</label>
+            <select id="marca" name="marcaId" required>
+                <option value="">Carregando Marcas...</option>
+            </select>
+
+            <button type="submit" id="cadastroBtn" class="primary-btn">Cadastrar Veículo</button>
+        </form>
+
+        <p id="mensagem"></p>
+    </div> <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const marcaSelect = document.getElementById('marca');
+            const veiculoForm = document.getElementById('veiculoForm');
+            const mensagemDiv = document.getElementById('mensagem');
+            const cadastroBtn = document.getElementById('cadastroBtn');
+
+            const API_BASE_URL = 'http://localhost:8081/api';
+            
+            let veiculoIdParaEdicao = null;
+            const urlPath = window.location.pathname;
+
+
+            // --- 1. FUNÇÃO PARA CARREGAR AS MARCAS ---
+            async function carregarMarcas(marcaIdSelecionada = null) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/marcas`);
+                    const marcas = await response.json();
+
+                    marcaSelect.innerHTML = '';
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = '';
+                    defaultOption.textContent = 'Selecione a Marca';
+                    marcaSelect.appendChild(defaultOption);
+
+                    marcas.forEach(marca => {
+                        const option = document.createElement('option');
+                        option.value = marca.id;
+                        option.textContent = marca.nome;
+                        
+                        if (marcaIdSelecionada && marca.id === marcaIdSelecionada) {
+                            option.selected = true;
+                        }
+
+                        marcaSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Erro ao carregar marcas:', error);
+                    marcaSelect.innerHTML = '<option value="">Erro ao carregar marcas</option>';
+                }
+            }
+            
+            // --- 2. FUNÇÃO PARA CARREGAR DADOS DO VEÍCULO EM MODO EDIÇÃO ---
+            async function carregarDadosParaEdicao() {
+                const match = urlPath.match(/\/veiculos\/editar\/(\d+)/); 
+                
+                if (match) {
+                    veiculoIdParaEdicao = match[1]; 
+                    document.querySelector('h1').textContent = `Editar Veículo (ID: ${veiculoIdParaEdicao})`;
+                    cadastroBtn.textContent = 'Atualizar Veículo';
+                    
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/veiculos/${veiculoIdParaEdicao}`);
+                        
+                        if (response.ok) {
+                            const veiculo = await response.json();
+                            
+                            document.getElementById('nome').value = veiculo.nome;
+                            document.getElementById('cor').value = veiculo.cor;
+                            document.getElementById('ano').value = veiculo.ano;
+                            document.getElementById('modelo').value = veiculo.modelo;
+                            document.getElementById('preco').value = veiculo.preco;
+                            document.getElementById('quilometragem').value = veiculo.quilometragem;
+                            document.getElementById('status').value = veiculo.status;
+
+                            if (veiculo.marca && veiculo.marca.id) {
+                                await carregarMarcas(veiculo.marca.id);
+                            } else {
+                                await carregarMarcas();
+                            }
+                            
+                        } else {
+                            alert('Erro ao carregar dados do veículo para edição.');
+                        }
+                    } catch (error) {
+                        console.error('Erro de rede ao buscar veículo:', error);
+                    }
+                } else {
+                    await carregarMarcas();
+                }
+            }
+
+
+            // --- 3. FUNÇÃO PARA ENVIAR O VEÍCULO (POST ou PUT) ---
+            veiculoForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                mensagemDiv.textContent = 'Enviando...';
+
+                const dados = {
+                    nome: document.getElementById('nome').value,
+                    modelo: document.getElementById('modelo').value,
+                    cor: document.getElementById('cor').value,
+                    ano: parseInt(document.getElementById('ano').value),
+                    preco: document.getElementById('preco').value,
+                    quilometragem: parseInt(document.getElementById('quilometragem').value),
+                    status: document.getElementById('status').value,
+
+                    marca: {
+                        id: parseInt(marcaSelect.value)
+                    }
+                };
+                
+                const method = veiculoIdParaEdicao ? 'PUT' : 'POST';
+                const url = veiculoIdParaEdicao 
+                    ? `${API_BASE_URL}/veiculos/${veiculoIdParaEdicao}` 
+                    : `${API_BASE_URL}/veiculos`; 
+                
+                try {
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(dados)
+                    });
+
+                    if (response.ok) {
+                        const isUpdate = veiculoIdParaEdicao !== null;
+                        const veiculoSalvo = isUpdate ? dados : await response.json();
+
+                        const mensagem = isUpdate
+                            ? `Veículo de ID ${veiculoIdParaEdicao} atualizado com sucesso!`
+                            : `Veículo "${veiculoSalvo.nome}" cadastrado com sucesso! ID: ${veiculoSalvo.id}`;
+                        
+                        if (isUpdate) {
+                            alert(mensagem);
+                            window.location.href = `/veiculos?cache=${new Date().getTime()}`;
+                        } else {
+                            mensagemDiv.textContent = mensagem;
+                            veiculoForm.reset();
+                            await carregarMarcas(); // Recarrega marcas após cadastro
+                        }
+
+                    } else {
+                        mensagemDiv.textContent = 'Erro ao salvar veículo. Verifique o console.';
+                        console.error(`Falha no ${method}:`, await response.text());
+                    }
+                } catch (error) {
+                    mensagemDiv.textContent = 'Erro de conexão com o servidor.';
+                    console.error('Erro de rede:', error);
+                }
+            });
+
+            carregarDadosParaEdicao();
+        });
+    </script>
+</body>
+</html>

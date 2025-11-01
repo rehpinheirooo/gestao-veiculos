@@ -1,0 +1,165 @@
+/* style.css */
+
+/* --- Estilos Gerais --- */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #dcdce3;
+    color: #333;
+    padding: 20px;
+    
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: #f7f0f0;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    color: #007bff;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 10px;
+    margin-bottom: 25px;
+}
+
+a {
+    color: #007bff;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+a:hover {
+    color: #0056b3;
+}
+
+/* --- Botões Padrão --- */
+button, input[type="submit"], .edit-btn {
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+    border: none;
+    text-align: center; 
+    display: inline-block;
+}
+
+.primary-btn {
+    background-color: #007bff;
+    color: white;
+}
+
+.primary-btn:hover {
+    background-color: #0056b3;
+}
+
+.delete-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+.delete-btn:hover {
+    background-color: #bd2130;
+}
+
+/* --- Formulários (Cadastro/Edição) --- */
+form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #555;
+}
+
+form input[type="text"],
+form input[type="number"],
+form select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box; 
+}
+
+/* --- Tabela de Listagem --- */
+#veiculoTable {
+    width: 100%;
+    margin-top: 20px;
+    border-collapse: separate; 
+    border-spacing: 0;
+    overflow: hidden; 
+}
+
+#veiculoTable thead th {
+    background-color: #007bff;
+    color: white;
+    padding: 12px;
+    text-align: left;
+}
+#veiculoTable thead th:first-child { border-top-left-radius: 8px; }
+#veiculoTable thead th:last-child { border-top-right-radius: 8px; }
+
+#veiculoTable tbody tr:nth-child(even) {
+    background-color: #f8f9fa; 
+}
+
+#veiculoTable tbody tr:hover {
+    background-color: #e2e6ea;
+}
+
+#veiculoTable td {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+#veiculoTable tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* --- Estilos do Bloco de Filtros --- */
+.filter-controls {
+    display: flex; 
+    gap: 15px; 
+    margin-bottom: 25px; 
+    flex-wrap: wrap;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border: 1px solid #eee;
+    border-radius: 6px;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-group label {
+    font-size: 14px;
+    margin-bottom: 5px;
+    color: #555;
+}
+
+.filter-group input,
+.filter-group select {
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* --- Mensagens --- */
+#mensagemLista, #mensagem {
+    padding: 10px;
+    margin-top: 15px;
+    border-radius: 4px;
+    font-weight: bold;
+    text-align: center;
+}
+
+#mensagemLista {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+}
